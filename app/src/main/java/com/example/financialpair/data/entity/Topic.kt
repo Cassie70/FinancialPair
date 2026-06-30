@@ -7,17 +7,15 @@ import androidx.room.PrimaryKey
 @Entity(
     foreignKeys = [
         ForeignKey(
-            entity = Topic::class,
+            entity = Category::class,
             parentColumns = ["id"],
-            childColumns = ["topicId"]
+            childColumns = ["categoryId"]
         )
     ]
 )
-data class Movement(
+data class Topic(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val description: String,
-    val amount: Int,
-    val date: Int,
-    val topicId: Int
+    val id: Int,
+    val name: String,
+    val categoryId: Int
 )
