@@ -1,4 +1,4 @@
-package com.example.financialpair.ui.screens
+package com.example.financialpair.ui.screens.movements
 
 import com.example.financialpair.data.entity.Movement
 

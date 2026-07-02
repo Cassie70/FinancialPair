@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.financialpair.di.appModule
-import com.example.financialpair.ui.screens.MovementsScreen
+import com.example.financialpair.ui.screens.MainScreen
 import org.koin.compose.KoinApplication
 import org.koin.dsl.koinConfiguration
 
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             KoinApplication(
                 configuration = koinConfiguration(declaration = { modules(appModule) }),
-                content = { MovementsScreen() }
+                content = { MainScreen() }
             )
         }
     }

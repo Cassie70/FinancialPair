@@ -1,4 +1,4 @@
-package com.example.financialpair.ui.screens
+package com.example.financialpair.ui.screens.movements
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -43,84 +42,81 @@ fun MovementsScreen(
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
 
-    Scaffold { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 25.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 25.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(text = uiState.error ?: "")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(text = uiState.error ?: "")
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                TextField(
-                    modifier = Modifier.weight(2f),
-                    value = uiState.description,
-                    onValueChange = vm::onDescriptionChange,
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Next
-                    ),
-                    maxLines = 1,
-                    isError = uiState.hasDescriptionError
+            TextField(
+                modifier = Modifier.weight(2f),
+                value = uiState.description,
+                onValueChange = vm::onDescriptionChange,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next
+                ),
+                maxLines = 1,
+                isError = uiState.hasDescriptionError
+            )
+            TextField(
+                modifier = Modifier.weight(1f),
+                value = uiState.amount,
+                onValueChange = vm::onAmountChange,
+                prefix = { Text("$") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Done
+                ),
+                maxLines = 1,
+                isError = uiState.hasAmountError,
+                keyboardActions = KeyboardActions(
+                    onDone = { vm.insertMovement() }
                 )
-                TextField(
-                    modifier = Modifier.weight(1f),
-                    value = uiState.amount,
-                    onValueChange = vm::onAmountChange,
-                    prefix = { Text("$") },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Done
-                    ),
-                    maxLines = 1,
-                    isError = uiState.hasAmountError,
-                    keyboardActions = KeyboardActions(
-                        onDone = { vm.insertMovement() }
-                    )
-                )
-            }
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(0.dp),
-                onClick = vm::insertMovement
-            ) {
-                Text(text = "+")
-            }
+            )
+        }
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(0.dp),
+            onClick = vm::insertMovement
+        ) {
+            Text(text = "+")
+        }
 
-            val totalsByDate = remember(uiState.movements) {
-                uiState.movements
-                    .groupBy { it.date }
-                    .mapValues { (_, movements) ->
-                        movements.sumOf { it.amount }
-                    }
-            }
-
-            LazyColumn {
-                itemsIndexed(uiState.movements) { index, movement ->
-
-                    val previous = uiState.movements.getOrNull(index - 1)
-                    val showHeader = previous == null || previous.date != movement.date
-
-                    if (showHeader) {
-                        FPMovementHeader(
-                            date = movement.date,
-                            total = totalsByDate[movement.date] ?: 0
-                        )
-                    }
-
-                    FPMovement(movement)
+        val totalsByDate = remember(uiState.movements) {
+            uiState.movements
+                .groupBy { it.date }
+                .mapValues { (_, movements) ->
+                    movements.sumOf { it.amount }
                 }
+        }
+
+        LazyColumn {
+            itemsIndexed(uiState.movements) { index, movement ->
+
+                val previous = uiState.movements.getOrNull(index - 1)
+                val showHeader = previous == null || previous.date != movement.date
+
+                if (showHeader) {
+                    FPMovementHeader(
+                        date = movement.date,
+                        total = totalsByDate[movement.date] ?: 0
+                    )
+                }
+
+                FPMovement(movement)
             }
         }
     }
+
 }
 
 @Composable
 fun FPMovementHeader(date: Int, total: Int){
-
     val df = DecimalFormat("$#,##0.00")
     Row(
         modifier = Modifier.fillMaxWidth(),

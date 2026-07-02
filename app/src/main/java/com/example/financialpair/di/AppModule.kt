@@ -2,7 +2,7 @@ package com.example.financialpair.di
 
 import com.example.financialpair.data.AppDatabase
 import com.example.financialpair.data.repository.MovementRepository
-import com.example.financialpair.ui.screens.MovementsScreenViewModel
+import com.example.financialpair.ui.screens.movements.MovementsScreenViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
