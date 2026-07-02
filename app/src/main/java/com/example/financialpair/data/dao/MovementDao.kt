@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MovementDao{
-
     @Query("SELECT * FROM movement ORDER BY id DESC")
     fun observeAll(): Flow<List<Movement>>
 

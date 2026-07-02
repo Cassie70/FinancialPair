@@ -37,6 +37,9 @@ abstract class AppDatabase : RoomDatabase() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
                         db.execSQL("INSERT INTO Category (id, name) VALUES (0, 'General')")
+                        db.execSQL("INSERT INTO Category (id, name) VALUES (1, 'Transporte')")
+                        db.execSQL("INSERT INTO Category (id, name) VALUES (2, 'Comida')")
+                        db.execSQL("INSERT INTO Category (id, name) VALUES (3, 'Salud')")
                         db.execSQL("INSERT INTO Topic (id, name, categoryId) VALUES (0, 'General', 0)")
                     }
                 })

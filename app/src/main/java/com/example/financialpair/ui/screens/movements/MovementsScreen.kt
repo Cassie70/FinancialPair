@@ -6,30 +6,27 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.financialpair.data.entity.Movement
+import com.example.financialpair.ui.components.FPMovement
+import com.example.financialpair.ui.components.FPMovementHeader
 import org.koin.compose.viewmodel.koinViewModel
-import java.text.DecimalFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -42,6 +39,21 @@ fun MovementsScreen(
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
 
+    MovementsScreenContent(
+        uiState = uiState,
+        onDescriptionChange = vm::onDescriptionChange,
+        onAmountChange = vm::onAmountChange,
+        insertMovement = vm::insertMovement
+    )
+}
+
+@Composable
+fun MovementsScreenContent(
+    uiState: MovementsScreenState,
+    onDescriptionChange: (String) -> Unit = {},
+    onAmountChange: (String) -> Unit = {},
+    insertMovement: () -> Unit = {}
+){
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -56,18 +68,20 @@ fun MovementsScreen(
             TextField(
                 modifier = Modifier.weight(2f),
                 value = uiState.description,
-                onValueChange = vm::onDescriptionChange,
+                onValueChange = onDescriptionChange,
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Next
                 ),
                 maxLines = 1,
+                label = { Text("Descripción") },
                 isError = uiState.hasDescriptionError
             )
             TextField(
                 modifier = Modifier.weight(1f),
                 value = uiState.amount,
-                onValueChange = vm::onAmountChange,
+                onValueChange = onAmountChange,
                 prefix = { Text("$") },
+                label = { Text("Monto") },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Done
@@ -75,14 +89,14 @@ fun MovementsScreen(
                 maxLines = 1,
                 isError = uiState.hasAmountError,
                 keyboardActions = KeyboardActions(
-                    onDone = { vm.insertMovement() }
+                    onDone = { insertMovement() }
                 )
             )
         }
         Button(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(0.dp),
-            onClick = vm::insertMovement
+            onClick = insertMovement
         ) {
             Text(text = "+")
         }
@@ -94,10 +108,8 @@ fun MovementsScreen(
                     movements.sumOf { it.amount }
                 }
         }
-
         LazyColumn {
             itemsIndexed(uiState.movements) { index, movement ->
-
                 val previous = uiState.movements.getOrNull(index - 1)
                 val showHeader = previous == null || previous.date != movement.date
 
@@ -107,46 +119,9 @@ fun MovementsScreen(
                         total = totalsByDate[movement.date] ?: 0
                     )
                 }
-
                 FPMovement(movement)
             }
         }
-    }
-
-}
-
-@Composable
-fun FPMovementHeader(date: Int, total: Int){
-    val df = DecimalFormat("$#,##0.00")
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(text = date.toLocalizedDate(), modifier = Modifier.weight(1f))
-        Text(text = df.format(total/100.0F))
-    }
-}
-
-@Composable
-fun FPMovement(movement: Movement){
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        val df = DecimalFormat("$#,##0.00")
-
-        Icon(
-            modifier = Modifier.size(50.dp),
-            imageVector = Icons.Default.ArrowDownward,
-            contentDescription = null,
-        )
-        Text(text = movement.id.toString())
-        Text(text = movement.description, modifier = Modifier.weight(1f))
-        Text(
-            text = df.format(movement.amount/100.0F),
-        )
     }
 }
 
@@ -159,5 +134,49 @@ fun Int.toLocalizedDate(): String {
     return date.format(
         DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
             .withLocale(Locale.getDefault())
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MovementsScreenPreview() {
+    MovementsScreenContent(
+        uiState = MovementsScreenState(
+            description = "Hola cara de bola",
+            amount = "25",
+            movements = listOf(
+                Movement(
+                    id = 1,
+                    description = "Comida",
+                    amount = 2500,
+                    date = 20260702,
+                    topicId = 0
+                ),
+                Movement(
+                    id = 2,
+                    description = "Salario",
+                    amount = 15000,
+                    date = 20260702,
+                    topicId = 0
+                ),
+                Movement(
+                    id = 3,
+                    description = "Netflix",
+                    amount = -150,
+                    date = 20260701,
+                    topicId = 0
+                ),
+                Movement(
+                    id = 4,
+                    description = "Comida",
+                    amount = 2500,
+                    date = 20260701,
+                    topicId = 0
+                )
+            )
+        ),
+        onDescriptionChange = {},
+        onAmountChange = {},
+        insertMovement = {}
     )
 }
