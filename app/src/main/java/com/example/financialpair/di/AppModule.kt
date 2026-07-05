@@ -18,6 +18,6 @@ val appModule = module {
     single { MovementRepository(get()) }
     single { TopicRepository(get()) }
     single { CategoryRepository(get()) }
-    viewModel { MovementsScreenViewModel(get()) }
+    viewModel { MovementsScreenViewModel(get(), get()) }
     viewModel { TopicsScreenViewModel(get(), get()) }
 }

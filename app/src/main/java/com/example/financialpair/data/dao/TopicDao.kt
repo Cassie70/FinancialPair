@@ -11,8 +11,11 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TopicDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(topic: Topic)
+    suspend fun insert(topic: Topic): Long
 
     @Query("SELECT topic.*, category.name as categoryName FROM topic LEFT JOIN category ON topic.categoryId = category.id ORDER BY topic.categoryId ASC")
     fun observeAllWithCategory(): Flow<List<TopicWithCategory>>
+
+    @Query("SELECT * FROM topic")
+    fun observeAll(): Flow<List<Topic>>
 }

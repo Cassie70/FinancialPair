@@ -3,7 +3,9 @@ package com.example.financialpair.ui.screens.movements
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financialpair.data.entity.Movement
+import com.example.financialpair.data.entity.Topic
 import com.example.financialpair.data.repository.MovementRepository
+import com.example.financialpair.data.repository.TopicRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -12,11 +14,14 @@ import java.time.LocalDate
 import kotlin.math.roundToInt
 
 class MovementsScreenViewModel(
-    private val repository: MovementRepository
+    private val repository: MovementRepository,
+    private val topicRepository: TopicRepository
 ): ViewModel() {
 
     private val _uiState = MutableStateFlow(MovementsScreenState())
     val uiState = _uiState.asStateFlow()
+
+    private var allTopics: List<Topic> = emptyList()
 
     init {
         viewModelScope.launch {
@@ -26,6 +31,12 @@ class MovementsScreenViewModel(
                         movements = movements
                     )
                 }
+            }
+        }
+
+        viewModelScope.launch {
+            topicRepository.topics.collect { topics ->
+                allTopics = topics
             }
         }
     }
@@ -70,16 +81,27 @@ class MovementsScreenViewModel(
 
         if (!descriptionValid || !amountValid) return
 
+        val matchedTopic = allTopics.find { topic ->
+            _uiState.value.description.contains(topic.name, ignoreCase = true)
+        }
+
         val today = LocalDate.now()
         val date = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
 
         viewModelScope.launch {
+            val finalTopicId = matchedTopic?.id ?: topicRepository.insert(
+                Topic(
+                    name = _uiState.value.description,
+                    categoryId = 0
+                )
+            ).getOrNull()?.toInt() ?: 0
+
             repository.insert(
                 Movement(
                     description = _uiState.value.description,
                     amount = (_uiState.value.amount.toDouble() * 100).roundToInt(),
                     date = date,
-                    topicId = 0
+                    topicId = finalTopicId
                 )
             )
                 .onSuccess {

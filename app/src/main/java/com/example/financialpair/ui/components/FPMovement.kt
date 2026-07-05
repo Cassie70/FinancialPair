@@ -30,6 +30,7 @@ fun FPMovement(movement: Movement){
             contentDescription = null,
         )
         Text(text = movement.id.toString())
+        Text(text = "T:${movement.topicId}")
         Text(text = movement.description, modifier = Modifier.weight(1f))
         Text(
             text = df.format(movement.amount/100.0F),
