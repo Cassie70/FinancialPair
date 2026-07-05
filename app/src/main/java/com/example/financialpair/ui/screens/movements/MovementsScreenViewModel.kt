@@ -6,6 +6,7 @@ import com.example.financialpair.data.entity.Movement
 import com.example.financialpair.data.entity.Topic
 import com.example.financialpair.data.repository.MovementRepository
 import com.example.financialpair.data.repository.TopicRepository
+import com.example.financialpair.util.FuzzyMatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -81,14 +82,14 @@ class MovementsScreenViewModel(
 
         if (!descriptionValid || !amountValid) return
 
-        val matchedTopic = allTopics.find { topic ->
-            _uiState.value.description.contains(topic.name, ignoreCase = true)
-        }
+        // Buscamos el tema con la mayor coincidencia (menor distancia)
+        val matchedTopic = FuzzyMatcher.findBestMatchedTopic(_uiState.value.description, allTopics)
 
         val today = LocalDate.now()
         val date = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
 
         viewModelScope.launch {
+            // Si no hay coincidencia razonable, se inserta un nuevo Topic
             val finalTopicId = matchedTopic?.id ?: topicRepository.insert(
                 Topic(
                     name = _uiState.value.description,
@@ -105,17 +106,10 @@ class MovementsScreenViewModel(
                 )
             )
                 .onSuccess {
-                    _uiState.update {
-                        it.copy(
-                            description = "",
-                            amount = ""
-                        )
-                    }
+                    _uiState.update { it.copy(description = "", amount = "") }
                 }
                 .onFailure { e ->
-                    _uiState.update {
-                        it.copy(error = e.message)
-                    }
+                    _uiState.update { it.copy(error = e.message) }
                 }
         }
     }
