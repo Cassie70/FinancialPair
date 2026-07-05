@@ -14,4 +14,14 @@ class TopicRepository(
         runCatching {
             dao.insert(topic)
         }
+
+    suspend fun update(topic: Topic): Result<Unit> =
+        runCatching {
+            dao.update(topic)
+        }
+
+    suspend fun delete(topic: Topic): Result<Unit> =
+        runCatching {
+            dao.delete(topic)
+        }
 }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financialpair.data.entity.Category
 import com.example.financialpair.data.entity.Topic
+import com.example.financialpair.data.entity.TopicWithCategory
 import com.example.financialpair.data.repository.CategoryRepository
 import com.example.financialpair.data.repository.TopicRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +24,8 @@ class TopicsScreenViewModel(
             topicRepository.topicsWithCategory.collect { topics ->
                 _uiState.update {
                     it.copy(
-                        topics = topics
+                        topics = topics,
+                        filteredTopics = filterTopics(topics, it.name, it.editingTopic != null)
                     )
                 }
             }
@@ -39,9 +41,22 @@ class TopicsScreenViewModel(
         }
     }
 
+    private fun filterTopics(
+        topics: List<TopicWithCategory>,
+        query: String,
+        isEditing: Boolean
+    ): List<TopicWithCategory> {
+        if (isEditing || query.isBlank()) return topics
+        return topics.filter { it.topic.name.contains(query, ignoreCase = true) }
+    }
+
     fun onCategoryChange(category: Category) {
         _uiState.update {
             it.copy(selectedCategory = category)
+        }
+        val state = _uiState.value
+        if (state.editingTopic != null) {
+            updateTopic(state.editingTopic.topic.copy(categoryId = category.id))
         }
     }
 
@@ -51,24 +66,89 @@ class TopicsScreenViewModel(
 
     fun onNameChange(value: String) {
         _uiState.update {
-            it.copy(name = value, hasNameError = !validateName(value))
+            val isEditing = it.editingTopic != null
+            it.copy(
+                name = value,
+                hasNameError = !validateName(value),
+                filteredTopics = filterTopics(it.topics, value, isEditing)
+            )
+        }
+        val state = _uiState.value
+        if (state.editingTopic != null && validateName(value)) {
+            updateTopic(state.editingTopic.topic.copy(name = value))
         }
     }
 
-    fun insertTopic(){
-        val nameValid = validateName(_uiState.value.name)
-        if (_uiState.value.selectedCategory == null || !nameValid) return
+    private fun updateTopic(topic: Topic) {
+        viewModelScope.launch {
+            topicRepository.update(topic).onFailure { e ->
+                _uiState.update {
+                    it.copy(error = e.message)
+                }
+            }
+        }
+    }
+
+    fun onTopicClick(topic: TopicWithCategory) {
+        if (_uiState.value.editingTopic?.topic?.id == topic.topic.id) {
+            clearSelection()
+            return
+        }
+        val category = _uiState.value.categories.find { it.name == topic.categoryName }
+        _uiState.update {
+            it.copy(
+                editingTopic = topic,
+                name = topic.topic.name,
+                selectedCategory = category,
+                hasNameError = false,
+                filteredTopics = it.topics // Show all topics when editing
+            )
+        }
+    }
+
+    fun clearSelection() {
+        _uiState.update {
+            it.copy(
+                editingTopic = null,
+                name = "",
+                selectedCategory = null,
+                hasNameError = false,
+                error = null,
+                filteredTopics = it.topics
+            )
+        }
+    }
+
+    fun deleteTopic(topic: Topic) {
+        viewModelScope.launch {
+            topicRepository.delete(topic).onSuccess {
+                if (_uiState.value.editingTopic?.topic?.id == topic.id) {
+                    clearSelection()
+                }
+            }.onFailure { e ->
+                _uiState.update {
+                    it.copy(error = e.message)
+                }
+            }
+        }
+    }
+
+    fun insertTopic() {
+        val state = _uiState.value
+        val nameValid = validateName(state.name)
+        if (state.selectedCategory == null || !nameValid) {
+            _uiState.update { it.copy(hasNameError = !nameValid) }
+            return
+        }
 
         viewModelScope.launch {
             topicRepository.insert(
                 Topic(
-                    name = _uiState.value.name,
-                    categoryId = _uiState.value.selectedCategory!!.id
+                    name = state.name,
+                    categoryId = state.selectedCategory.id
                 )
             ).onSuccess {
-                _uiState.update {
-                    it.copy(name = "", selectedCategory = null, error = null)
-                }
+                clearSelection()
             }.onFailure { e ->
                 _uiState.update {
                     it.copy(error = e.message)

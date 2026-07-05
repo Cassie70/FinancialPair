@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">FinancialPair</string>
+
+    <!-- Default Categories -->
+    <string name="category_general">General</string>
+    <string name="category_transport">Transporte</string>
+    <string name="category_food">Comida</string>
+    <string name="category_health">Salud</string>
+    <string name="category_entertainment">Entretenimiento</string>
+    <string name="category_clothes">Ropa</string>
+
+    <!-- Default Topics -->
+    <string name="topic_general">General</string>
 </resources>

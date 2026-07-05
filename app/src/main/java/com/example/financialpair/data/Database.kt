@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.financialpair.R
 import com.example.financialpair.data.dao.CategoryDao
 import com.example.financialpair.data.dao.MovementDao
 import com.example.financialpair.data.dao.TopicDao
@@ -36,11 +37,21 @@ abstract class AppDatabase : RoomDatabase() {
                 ).addCallback(object : Callback(){
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
-                        db.execSQL("INSERT INTO Category (id, name) VALUES (0, 'General')")
-                        db.execSQL("INSERT INTO Category (id, name) VALUES (1, 'Transporte')")
-                        db.execSQL("INSERT INTO Category (id, name) VALUES (2, 'Comida')")
-                        db.execSQL("INSERT INTO Category (id, name) VALUES (3, 'Salud')")
-                        db.execSQL("INSERT INTO Topic (id, name, categoryId) VALUES (0, 'General', 0)")
+                        val general = context.getString(R.string.category_general)
+                        val transport = context.getString(R.string.category_transport)
+                        val food = context.getString(R.string.category_food)
+                        val health = context.getString(R.string.category_health)
+                        val entertainment = context.getString(R.string.category_entertainment)
+                        val clothes = context.getString(R.string.category_clothes)
+                        val topicGeneral = context.getString(R.string.topic_general)
+
+                        db.execSQL("INSERT INTO Category (id, name) VALUES (0, ?)", arrayOf(general))
+                        db.execSQL("INSERT INTO Category (id, name) VALUES (1, ?)", arrayOf(transport))
+                        db.execSQL("INSERT INTO Category (id, name) VALUES (2, ?)", arrayOf(food))
+                        db.execSQL("INSERT INTO Category (id, name) VALUES (3, ?)", arrayOf(health))
+                        db.execSQL("INSERT INTO Category (id, name) VALUES (4, ?)", arrayOf(entertainment))
+                        db.execSQL("INSERT INTO Category (id, name) VALUES (5, ?)", arrayOf(clothes))
+                        db.execSQL("INSERT INTO Topic (id, name, categoryId) VALUES (0, ?, 0)", arrayOf(topicGeneral))
                     }
                 })
                     .build().also {
