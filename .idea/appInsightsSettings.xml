@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.juni7.financialpair" />
+                  <option name="mobileSdkAppId" value="1:559771708296:android:6424ef64fceaf910fe683d" />
+                  <option name="projectId" value="financial-pair" />
+                  <option name="projectNumber" value="559771708296" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
