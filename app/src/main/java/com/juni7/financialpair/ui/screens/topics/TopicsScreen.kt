@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.juni7.financialpair.data.entity.Category
 import com.juni7.financialpair.data.entity.Topic
 import com.juni7.financialpair.data.entity.TopicWithCategory
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -72,6 +74,7 @@ fun TopicsScreenContent(
     onDeleteTopic: (Topic) -> Unit = {}
 ){
     var topicToDelete by remember { mutableStateOf<Topic?>(null) }
+    val scope = rememberCoroutineScope()
 
     if (topicToDelete != null) {
         AlertDialog(
@@ -153,21 +156,18 @@ fun TopicsScreenContent(
                     )
                 }
 
-                val dismissState = rememberSwipeToDismissBoxState(
-                    confirmValueChange = { value ->
-                        if (value == SwipeToDismissBoxValue.StartToEnd) {
-                            topicToDelete = item.topic
-                            false // Don't dismiss yet, wait for dialog
-                        } else {
-                            false
-                        }
-                    }
-                )
+                val dismissState = rememberSwipeToDismissBoxState()
 
                 SwipeToDismissBox(
                     state = dismissState,
                     enableDismissFromStartToEnd = true,
                     enableDismissFromEndToStart = false,
+                    onDismiss = { value ->
+                        if (value == SwipeToDismissBoxValue.StartToEnd) {
+                            topicToDelete = item.topic
+                            scope.launch { dismissState.reset() }
+                        }
+                    },
                     backgroundContent = {
                         Box(
                             modifier = Modifier

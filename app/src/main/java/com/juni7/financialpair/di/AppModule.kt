@@ -4,6 +4,7 @@ import com.juni7.financialpair.data.AppDatabase
 import com.juni7.financialpair.data.repository.CategoryRepository
 import com.juni7.financialpair.data.repository.MovementRepository
 import com.juni7.financialpair.data.repository.TopicRepository
+import com.juni7.financialpair.ui.screens.movements.EditMovementViewModel
 import com.juni7.financialpair.ui.screens.movements.MovementsScreenViewModel
 import com.juni7.financialpair.ui.screens.topics.TopicsScreenViewModel
 import org.koin.android.ext.koin.androidContext
@@ -20,4 +21,5 @@ val appModule = module {
     single { CategoryRepository(get()) }
     viewModel { MovementsScreenViewModel(get(), get()) }
     viewModel { TopicsScreenViewModel(get(), get()) }
+    viewModel { parameters -> EditMovementViewModel(parameters.get(), get()) }
 }

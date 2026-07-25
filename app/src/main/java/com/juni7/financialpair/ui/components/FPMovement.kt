@@ -1,5 +1,6 @@
 package com.juni7.financialpair.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,11 +22,13 @@ import java.text.DecimalFormat
 @Composable
 fun FPMovement(
     movement: Movement,
-    logoUrl: String? = null
+    logoUrl: String? = null,
+    onClick: () -> Unit = {}
 ){
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)

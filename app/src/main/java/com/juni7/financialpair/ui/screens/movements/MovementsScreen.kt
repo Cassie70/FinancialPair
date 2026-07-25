@@ -37,6 +37,7 @@ import java.util.Locale
 
 @Composable
 fun MovementsScreen(
+    onMovementClick: (Long) -> Unit = {},
     vm: MovementsScreenViewModel = koinViewModel()
 ) {
     val uiState by vm.uiState.collectAsStateWithLifecycle()
@@ -45,7 +46,8 @@ fun MovementsScreen(
         uiState = uiState,
         onDescriptionChange = vm::onDescriptionChange,
         onAmountChange = vm::onAmountChange,
-        insertMovement = vm::insertMovement
+        insertMovement = vm::insertMovement,
+        onMovementClick = onMovementClick
     )
 }
 
@@ -54,7 +56,8 @@ fun MovementsScreenContent(
     uiState: MovementsScreenState,
     onDescriptionChange: (String) -> Unit = {},
     onAmountChange: (String) -> Unit = {},
-    insertMovement: () -> Unit = {}
+    insertMovement: () -> Unit = {},
+    onMovementClick: (Long) -> Unit = {}
 ){
     Column(
         modifier = Modifier
@@ -125,7 +128,8 @@ fun MovementsScreenContent(
                 }
                 FPMovement(
                     movement = movement,
-                    logoUrl = uiState.logoUrls[topic.name]
+                    logoUrl = uiState.logoUrls[topic.name],
+                    onClick = { onMovementClick(movement.id) }
                 )
             }
         }

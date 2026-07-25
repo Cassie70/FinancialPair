@@ -17,10 +17,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.juni7.financialpair.ui.screens.movements.EditMovementScreen
 import com.juni7.financialpair.ui.screens.movements.MovementsScreen
 import com.juni7.financialpair.ui.screens.topics.TopicsScreen
 import kotlinx.serialization.Serializable
@@ -29,6 +32,8 @@ import kotlinx.serialization.Serializable
 data object Movements: NavKey
 @Serializable
 data object Topics: NavKey
+@Serializable
+data class EditMovement(val id: Long): NavKey
 
 @Composable
 fun MainScreen(){
@@ -74,15 +79,23 @@ fun MainScreen(){
                     .fillMaxSize()
                     .padding(innerPadding),
                 backStack = backStack,
+                entryDecorators = listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator()
+                ),
+                onBack = { backStack.removeLastOrNull() },
                 transitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
                 popTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
                 predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
                 entryProvider = entryProvider {
                     entry<Movements>() {
-                        MovementsScreen()
+                        MovementsScreen(onMovementClick = { id -> backStack.add(EditMovement(id)) })
                     }
                     entry<Topics> {
                         TopicsScreen()
+                    }
+                    entry<EditMovement> { route ->
+                        EditMovementScreen(movementId = route.id, onBack = { backStack.removeLastOrNull() })
                     }
                 }
             )

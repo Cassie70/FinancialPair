@@ -12,11 +12,17 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MovementDao{
     @Transaction
-    @Query("SELECT * FROM movement ORDER BY id DESC")
+    @Query("SELECT * FROM movement ORDER BY date DESC")
     fun observeAll(): Flow<List<MovementWithTopic>>
 
     @Insert
     suspend fun insert(movement: Movement)
+
+    @androidx.room.Update
+    suspend fun update(movement: Movement)
+
+    @Query("SELECT * FROM movement WHERE id = :id")
+    suspend fun findById(id: Long): Movement?
 
     @Delete
     suspend fun delete(movement: Movement)
