@@ -103,8 +103,30 @@ class MovementsScreenViewModel(
     }
 
     fun onDescriptionChange(value: String) {
+        val suggestions = if (value.length >= 2) {
+            val query = value.lowercase()
+            allTopics.filter { 
+                it.name.lowercase().contains(query) 
+            }.take(5)
+        } else {
+            emptyList()
+        }
+
         _uiState.update {
-            it.copy(description = value, hasDescriptionError  = !validateDescription(value))
+            it.copy(
+                description = value,
+                suggestedTopics = suggestions,
+                hasDescriptionError = !validateDescription(value)
+            )
+        }
+    }
+
+    fun onTopicSelected(topic: Topic) {
+        _uiState.update {
+            it.copy(
+                description = topic.name,
+                suggestedTopics = emptyList()
+            )
         }
     }
 
@@ -158,7 +180,7 @@ class MovementsScreenViewModel(
                 )
             )
                 .onSuccess {
-                    _uiState.update { it.copy(description = "", amount = "") }
+                    _uiState.update { it.copy(description = "", amount = "", suggestedTopics = emptyList()) }
                 }
                 .onFailure { e ->
                     _uiState.update { it.copy(error = e.message) }

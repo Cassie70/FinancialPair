@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MovementDao{
     @Transaction
-    @Query("SELECT * FROM movement ORDER BY date DESC")
+    @Query("SELECT * FROM movement ORDER BY date DESC, id DESC")
     fun observeAll(): Flow<List<MovementWithTopic>>
 
     @Insert
