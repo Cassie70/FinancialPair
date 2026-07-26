@@ -47,7 +47,12 @@ fun MainScreen(){
             ) {
                 NavigationBarItem(
                     selected = backStack.last() == Movements,
-                    onClick = { if(backStack.last() != Movements) backStack.add(Movements) },
+                    onClick = {
+                        if (backStack.last() != Movements) {
+                            backStack.clear()
+                            backStack.add(Movements)
+                        }
+                    },
                     icon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.List,
@@ -60,7 +65,12 @@ fun MainScreen(){
                 )
                 NavigationBarItem(
                     selected = backStack.last() == Topics,
-                    onClick = { if(backStack.last() != Topics) backStack.add(Topics) },
+                    onClick = {
+                        if (backStack.last() != Topics) {
+                            backStack.clear()
+                            backStack.add(Topics)
+                        }
+                    },
                     icon = {
                         Icon(
                             imageVector = Icons.Default.Add,
