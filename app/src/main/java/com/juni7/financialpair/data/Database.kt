@@ -100,7 +100,6 @@ abstract class AppDatabase : RoomDatabase() {
                         )
                     }
                 })
-                    .fallbackToDestructiveMigration(true)
                     .build().also {
                     Instance = it
                 }
