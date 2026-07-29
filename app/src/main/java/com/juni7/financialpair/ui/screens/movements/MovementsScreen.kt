@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.juni7.financialpair.data.entity.Category
 import com.juni7.financialpair.data.entity.Movement
 import com.juni7.financialpair.data.entity.MovementWithTopic
 import com.juni7.financialpair.data.entity.Topic
@@ -171,6 +172,7 @@ fun MovementsScreenContent(
                 FPMovement(
                     movement = movement,
                     logoUrl = uiState.logoUrls[topic.name],
+                    fallbackEmoji = movementWithTopic.category.emoji,
                     onClick = { onMovementClick(movement.id) }
                 )
             }
@@ -206,7 +208,10 @@ private fun MovementsScreenPreview() {
                         date = 20260702,
                         topicId = 1
                     ),
-                    topic = Topic(id = 1, name = "Comida", categoryId = 0)
+                    topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
+                        topic = Topic(id = 1, name = "Comida", categoryId = 2),
+                        category = Category(id = 2, name = "Comida", emoji = "🍴")
+                    )
                 ),
                 MovementWithTopic(
                     movement = Movement(
@@ -216,7 +221,10 @@ private fun MovementsScreenPreview() {
                         date = 20260702,
                         topicId = 2
                     ),
-                    topic = Topic(id = 2, name = "Salario", categoryId = 0)
+                    topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
+                        topic = Topic(id = 2, name = "Salario", categoryId = 0),
+                        category = Category(id = 0, name = "General", emoji = "💰")
+                    )
                 ),
                 MovementWithTopic(
                     movement = Movement(
@@ -226,7 +234,10 @@ private fun MovementsScreenPreview() {
                         date = 20260701,
                         topicId = 3
                     ),
-                    topic = Topic(id = 3, name = "Netflix", categoryId = 0)
+                    topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
+                        topic = Topic(id = 3, name = "Netflix", categoryId = 4),
+                        category = Category(id = 4, name = "Entretenimiento", emoji = "🎮")
+                    )
                 ),
                 MovementWithTopic(
                     movement = Movement(
@@ -236,7 +247,10 @@ private fun MovementsScreenPreview() {
                         date = 20260701,
                         topicId = 1
                     ),
-                    topic = Topic(id = 1, name = "Comida", categoryId = 0)
+                    topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
+                        topic = Topic(id = 1, name = "Comida", categoryId = 2),
+                        category = Category(id = 2, name = "Comida", emoji = "🍴")
+                    )
                 )
             )
         ),

@@ -148,7 +148,7 @@ fun TopicsScreenContent(
 
                 if (showHeader) {
                     Text(
-                        text = item.categoryName,
+                        text = item.category.name,
                         modifier = Modifier.padding(top = 10.dp),
                         fontWeight = FontWeight.Bold,
                         color = Color.Gray,
@@ -208,22 +208,22 @@ fun TopicsScreenContent(
 fun TopicsScreenPreview(){
     TopicsScreenContent(
         uiState = TopicsScreenState(
-            topics = listOf(
+            filteredTopics = listOf(
                 TopicWithCategory(
                     topic = Topic(id = 1, name = "Uber", categoryId = 1),
-                    categoryName = "Transporte"
+                    category = Category(id = 1, name = "Transporte")
                 ),
                 TopicWithCategory(
                     topic = Topic(id = 2, name = "Camión", categoryId = 1),
-                    categoryName = "Transporte"
+                    category = Category(id = 1, name = "Transporte")
                 ),
                 TopicWithCategory(
                     topic = Topic(id = 3, name = "Carls jr", categoryId = 2),
-                    categoryName = "Comida"
+                    category = Category(id = 1, name = "Comida")
                 ),
                 TopicWithCategory(
                     topic = Topic(id = 4, name = "Tacos", categoryId = 2),
-                    categoryName = "Comida"
+                    category = Category(id = 1, name = "Comida")
                 )
             ),
             categories = listOf(

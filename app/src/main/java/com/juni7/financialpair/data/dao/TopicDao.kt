@@ -15,7 +15,8 @@ interface TopicDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(topic: Topic): Long
 
-    @Query("SELECT topic.*, category.name as categoryName FROM topic LEFT JOIN category ON topic.categoryId = category.id ORDER BY topic.categoryId ASC")
+    @androidx.room.Transaction
+    @Query("SELECT * FROM topic")
     fun observeAllWithCategory(): Flow<List<TopicWithCategory>>
 
     @Query("SELECT * FROM topic")

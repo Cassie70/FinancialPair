@@ -40,7 +40,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,8 +63,15 @@ fun EditMovementScreen(
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = try {
-                val localDate = LocalDate.parse(uiState.date, DateTimeFormatter.ofPattern("yyyyMMdd"))
-                localDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                val localDate = LocalDate.parse(
+                    uiState.date,
+                    DateTimeFormatter.BASIC_ISO_DATE
+                )
+
+                localDate
+                    .atStartOfDay(ZoneOffset.UTC)
+                    .toInstant()
+                    .toEpochMilli()
             } catch (e: Exception) {
                 System.currentTimeMillis()
             }
@@ -76,9 +83,11 @@ fun EditMovementScreen(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
                         val selectedDate = Instant.ofEpochMilli(millis)
-                            .atZone(ZoneId.systemDefault())
+                            .atZone(ZoneOffset.UTC)
                             .toLocalDate()
-                        viewModel.onDateChange(selectedDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")))
+                        viewModel.onDateChange(
+                            selectedDate.format(DateTimeFormatter.BASIC_ISO_DATE)
+                        )
                     }
                     showDatePicker = false
                 }) {

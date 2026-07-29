@@ -94,7 +94,7 @@ class TopicsScreenViewModel(
             clearSelection()
             return
         }
-        val category = _uiState.value.categories.find { it.name == topic.categoryName }
+        val category = _uiState.value.categories.find { it.name == topic.category.name }
         _uiState.update {
             it.copy(
                 editingTopic = topic,

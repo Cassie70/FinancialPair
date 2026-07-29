@@ -6,8 +6,12 @@ import androidx.room.Relation
 data class MovementWithTopic(
     @Embedded val movement: Movement,
     @Relation(
+        entity = Topic::class,
         parentColumn = "topicId",
         entityColumn = "id"
     )
-    val topic: Topic
-)
+    val topicWithCategory: TopicWithCategory
+) {
+    val topic: Topic get() = topicWithCategory.topic
+    val category: Category get() = topicWithCategory.category
+}
