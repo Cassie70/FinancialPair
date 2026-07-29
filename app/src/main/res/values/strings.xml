@@ -8,7 +8,11 @@
     <string name="category_health">Salud</string>
     <string name="category_entertainment">Entretenimiento</string>
     <string name="category_clothes">Ropa</string>
-
+    <string name="category_education">Educación</string>
+    <string name="category_shopping">Compras</string>">
+    <string name="category_housing">Vivienda</string>
+    <string name="category_travel">Viajes</string>
+    <string name="category_family">Familia</string>
     <!-- Default Topics -->
     <string name="topic_general">General</string>
 </resources>

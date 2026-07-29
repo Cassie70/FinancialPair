@@ -120,7 +120,7 @@ fun TopicsScreenContent(
                 FilterChip(
                     selected = uiState.selectedCategory?.id == category.id,
                     onClick = { onCategoryChange(category) },
-                    label = { Text(category.name) }
+                    label = { Text(category.name + " " + category.emoji) }
                 )
             }
         }
@@ -148,11 +148,11 @@ fun TopicsScreenContent(
 
                 if (showHeader) {
                     Text(
-                        text = item.category.name,
+                        text = item.category.emoji + " " + item.category.name,
                         modifier = Modifier.padding(top = 10.dp),
                         fontWeight = FontWeight.Bold,
                         color = Color.Gray,
-                        fontSize = 12.sp
+                        fontSize = 14.sp
                     )
                 }
 
@@ -189,7 +189,8 @@ fun TopicsScreenContent(
                             Text(
                                 text = item.topic.name,
                                 fontWeight = if (isEditing) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isEditing) Color.Blue else Color.Unspecified
+                                color = if (isEditing) Color.Blue else Color.Unspecified,
+                                fontSize = 16.sp
                             )
                         },
                         modifier = Modifier
@@ -211,24 +212,24 @@ fun TopicsScreenPreview(){
             filteredTopics = listOf(
                 TopicWithCategory(
                     topic = Topic(id = 1, name = "Uber", categoryId = 1),
-                    category = Category(id = 1, name = "Transporte")
+                    category = Category(id = 1, name = "Transporte", emoji = "🚗")
                 ),
                 TopicWithCategory(
                     topic = Topic(id = 2, name = "Camión", categoryId = 1),
-                    category = Category(id = 1, name = "Transporte")
+                    category = Category(id = 1, name = "Transporte", emoji = "🚗")
                 ),
                 TopicWithCategory(
                     topic = Topic(id = 3, name = "Carls jr", categoryId = 2),
-                    category = Category(id = 1, name = "Comida")
+                    category = Category(id = 1, name = "Comida", emoji = "🍔")
                 ),
                 TopicWithCategory(
                     topic = Topic(id = 4, name = "Tacos", categoryId = 2),
-                    category = Category(id = 1, name = "Comida")
+                    category = Category(id = 1, name = "Comida", emoji = "🍔")
                 )
             ),
             categories = listOf(
-                Category(id = 1, name = "Transporte"),
-                Category(id = 2, name = "Comida")
+                Category(id = 1, name = "Transporte", emoji = "🚗"),
+                Category(id = 2, name = "Comida", emoji = "🍔")
             )
         )
     )
