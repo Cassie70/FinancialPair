@@ -1,5 +1,6 @@
 package com.juni7.financialpair.ui.screens.movements
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -23,11 +25,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
@@ -64,6 +69,7 @@ fun MovementsScreen(
         onDescriptionChange = vm::onDescriptionChange,
         onAmountChange = vm::onAmountChange,
         onTopicSelected = vm::onTopicSelected,
+        onTopicAndAmountSelected = vm::onTopicAndAmountSelected,
         insertMovement = vm::insertMovement,
         onMovementClick = onMovementClick
     )
@@ -73,13 +79,14 @@ fun MovementsScreen(
 fun MovementsScreenContent(
     uiState: MovementsScreenState,
     movements: LazyPagingItems<MovementWithTopic>,
-    onDescriptionChange: (String) -> Unit = {},
+    onDescriptionChange: (TextFieldValue) -> Unit = {},
     onAmountChange: (String) -> Unit = {},
     onTopicSelected: (Topic) -> Unit = {},
+    onTopicAndAmountSelected: (Topic, Int) -> Unit = { _, _ -> },
     insertMovement: () -> Unit = {},
     onMovementClick: (Long) -> Unit = {}
 ){
-    var textFieldWidth by remember { mutableStateOf(0.dp) }
+    var fullWidth by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
 
     Column(
@@ -90,15 +97,15 @@ fun MovementsScreenContent(
     ) {
         Text(text = uiState.error ?: "")
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { coordinates ->
+                    fullWidth = with(density) { coordinates.size.width.toDp() }
+                },
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Box(
-                modifier = Modifier
-                    .weight(2f)
-                    .onGloballyPositioned { coordinates ->
-                        textFieldWidth = with(density) { coordinates.size.width.toDp() }
-                    }
+                modifier = Modifier.weight(2f)
             ) {
                 TextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -119,12 +126,35 @@ fun MovementsScreenContent(
                         focusable = false
                     ),
                     modifier = Modifier
-                        .width(textFieldWidth)
-                        .heightIn(max = 56.dp) // Solo una línea aprox y scrollable
+                        .width(fullWidth)
+                        .heightIn(max = 200.dp)
                 ) {
-                    uiState.suggestedTopics.forEach { topic ->
+                    uiState.suggestedTopics.forEach { suggestion ->
+                        val topic = suggestion.topic
+                        val lastAmount = suggestion.lastAmount
                         DropdownMenuItem(
-                            text = { Text(topic.name) },
+                            text = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = topic.name,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (lastAmount != null) {
+                                        Text(
+                                            text = "$${lastAmount / 100.0}",
+                                            modifier = Modifier
+                                                .clickable { onTopicAndAmountSelected(topic, lastAmount) }
+                                                .padding(start = 8.dp),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            },
                             onClick = { onTopicSelected(topic) }
                         )
                     }
@@ -236,7 +266,7 @@ private fun MovementsScreenPreview() {
 
     MovementsScreenContent(
         uiState = MovementsScreenState(
-            description = "Hola cara de bola",
+            description = TextFieldValue("Hola cara de bola"),
             amount = "25",
         ),
         movements = movements,

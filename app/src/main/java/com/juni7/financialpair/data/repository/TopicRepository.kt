@@ -9,6 +9,8 @@ class TopicRepository(
     val topicsWithCategory = dao.observeAllWithCategory()
 
     val topics = dao.observeAll()
+    
+    val topicsWithLastAmount = dao.observeTopicsWithLastAmount()
 
     suspend fun insert(topic: Topic): Result<Long> =
         runCatching {

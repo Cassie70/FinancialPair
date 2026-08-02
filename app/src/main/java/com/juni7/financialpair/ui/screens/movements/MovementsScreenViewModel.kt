@@ -21,6 +21,9 @@ import kotlin.math.roundToInt
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import kotlinx.coroutines.flow.Flow
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
+import com.juni7.financialpair.data.model.TopicWithLastAmount
 
 class MovementsScreenViewModel(
     private val repository: MovementRepository,
@@ -33,7 +36,7 @@ class MovementsScreenViewModel(
     val movementsPaged: Flow<PagingData<MovementWithTopic>> = repository.getPagedMovements()
         .cachedIn(viewModelScope)
 
-    private var allTopics: List<Topic> = emptyList()
+    private var allTopics: List<TopicWithLastAmount> = emptyList()
     private val inProgressFetches = mutableSetOf<String>()
 
     init {
@@ -54,7 +57,7 @@ class MovementsScreenViewModel(
         }
 
         viewModelScope.launch {
-            topicRepository.topics.collect { topics ->
+            topicRepository.topicsWithLastAmount.collect { topics ->
                 allTopics = topics
             }
         }
@@ -121,11 +124,11 @@ class MovementsScreenViewModel(
         return value.isNotBlank() && value.toDoubleOrNull() != null
     }
 
-    fun onDescriptionChange(value: String) {
-        val suggestions = if (value.length >= 2) {
-            val query = value.lowercase()
+    fun onDescriptionChange(value: TextFieldValue) {
+        val suggestions = if (value.text.length >= 2) {
+            val query = value.text.lowercase()
             allTopics.filter { 
-                it.name.lowercase().contains(query) 
+                it.topic.name.lowercase().contains(query) 
             }.take(5)
         } else {
             emptyList()
@@ -135,7 +138,7 @@ class MovementsScreenViewModel(
             it.copy(
                 description = value,
                 suggestedTopics = suggestions,
-                hasDescriptionError = !validateDescription(value)
+                hasDescriptionError = !validateDescription(value.text)
             )
         }
     }
@@ -143,8 +146,43 @@ class MovementsScreenViewModel(
     fun onTopicSelected(topic: Topic) {
         _uiState.update {
             it.copy(
-                description = topic.name,
+                description = TextFieldValue(
+                    text = topic.name,
+                    selection = TextRange(topic.name.length)
+                ),
                 suggestedTopics = emptyList()
+            )
+        }
+    }
+
+    fun onTopicAndAmountSelected(topic: Topic, amount: Int) {
+        val today = LocalDate.now()
+        val date = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
+
+        viewModelScope.launch {
+            repository.insert(
+                Movement(
+                    description = topic.name,
+                    amount = amount,
+                    date = date,
+                    topicId = topic.id
+                )
+            ).onSuccess {
+                clearInputs()
+            }.onFailure { e ->
+                _uiState.update { it.copy(error = e.message) }
+            }
+        }
+    }
+
+    private fun clearInputs() {
+        _uiState.update {
+            it.copy(
+                description = TextFieldValue(""),
+                amount = "",
+                suggestedTopics = emptyList(),
+                hasDescriptionError = false,
+                hasAmountError = false
             )
         }
     }
@@ -163,7 +201,8 @@ class MovementsScreenViewModel(
     }
 
     fun insertMovement() {
-        val descriptionValid = validateDescription(_uiState.value.description)
+        val descriptionText = _uiState.value.description.text
+        val descriptionValid = validateDescription(descriptionText)
         val amountValid = validateAmount(_uiState.value.amount)
 
         _uiState.update {
@@ -176,7 +215,7 @@ class MovementsScreenViewModel(
         if (!descriptionValid || !amountValid) return
 
         // Buscamos el tema con la mayor coincidencia (menor distancia)
-        val matchedTopic = FuzzyMatcher.findBestMatchedTopic(_uiState.value.description, allTopics)
+        val matchedTopic = FuzzyMatcher.findBestMatchedTopic(descriptionText, allTopics.map { it.topic })
 
         val today = LocalDate.now()
         val date = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
@@ -185,21 +224,21 @@ class MovementsScreenViewModel(
             // Si no hay coincidencia razonable, se inserta un nuevo Topic
             val finalTopicId = matchedTopic?.id ?: topicRepository.insert(
                 Topic(
-                    name = _uiState.value.description,
+                    name = descriptionText,
                     categoryId = 0
                 )
             ).getOrNull()?.toInt() ?: 0
 
             repository.insert(
                 Movement(
-                    description = _uiState.value.description,
+                    description = descriptionText,
                     amount = (_uiState.value.amount.toDouble() * 100).roundToInt(),
                     date = date,
                     topicId = finalTopicId
                 )
             )
                 .onSuccess {
-                    _uiState.update { it.copy(description = "", amount = "", suggestedTopics = emptyList()) }
+                    clearInputs()
                 }
                 .onFailure { e ->
                     _uiState.update { it.copy(error = e.message) }

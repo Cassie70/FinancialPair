@@ -19,6 +19,14 @@ interface TopicDao {
     @Query("SELECT * FROM topic")
     fun observeAllWithCategory(): Flow<List<TopicWithCategory>>
 
+    @androidx.room.Transaction
+    @Query("""
+        SELECT t.*, 
+        (SELECT m.amount FROM movement m WHERE m.topicId = t.id ORDER BY m.date DESC, m.id DESC LIMIT 1) as lastAmount
+        FROM topic t
+    """)
+    fun observeTopicsWithLastAmount(): Flow<List<com.juni7.financialpair.data.model.TopicWithLastAmount>>
+
     @Query("SELECT * FROM topic")
     fun observeAll(): Flow<List<Topic>>
 
