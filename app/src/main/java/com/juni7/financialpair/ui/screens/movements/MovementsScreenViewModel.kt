@@ -18,6 +18,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import kotlin.math.roundToInt
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import kotlinx.coroutines.flow.Flow
 
 class MovementsScreenViewModel(
     private val repository: MovementRepository,
@@ -27,18 +30,26 @@ class MovementsScreenViewModel(
     private val _uiState = MutableStateFlow(MovementsScreenState())
     val uiState = _uiState.asStateFlow()
 
+    val movementsPaged: Flow<PagingData<MovementWithTopic>> = repository.getPagedMovements()
+        .cachedIn(viewModelScope)
+
     private var allTopics: List<Topic> = emptyList()
     private val inProgressFetches = mutableSetOf<String>()
 
     init {
+        // We still observe movements for logos, but maybe we should do it differently.
+        // For now, let's keep a simplified version or observe paged items in the UI.
         viewModelScope.launch {
             repository.movements.collect { movements ->
-                _uiState.update {
-                    it.copy(
-                        movements = movements
-                    )
-                }
                 fetchMissingLogos(movements)
+            }
+        }
+
+        viewModelScope.launch {
+            repository.totalsByDate.collect { totals ->
+                _uiState.update {
+                    it.copy(totalsByDate = totals.associate { it.date to it.total })
+                }
             }
         }
 

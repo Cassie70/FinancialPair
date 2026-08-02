@@ -1,6 +1,5 @@
 package com.juni7.financialpair.ui.screens.topics
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -23,7 +21,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -156,18 +153,18 @@ fun TopicsScreenContent(
         uiState.error?.let {
             Text(text = it, color = Color.Red)
         }
+        val groupedTopics = remember(uiState.filteredTopics) {
+            uiState.filteredTopics.groupBy { it.category.id }
+        }
+
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            itemsIndexed(uiState.filteredTopics) { index, item ->
-                val previous = uiState.filteredTopics.getOrNull(index - 1)
-                val showHeader = previous == null || previous.topic.categoryId != item.topic.categoryId
-                val isEditing = uiState.editingTopic?.topic?.id == item.topic.id
-
-                if (showHeader) {
+            groupedTopics.forEach { (_, topicsInCategory) ->
+                item {
                     Text(
-                        text = item.category.getLocalizedName(LocalContext.current),
+                        text = topicsInCategory.first().category.getLocalizedName(LocalContext.current),
                         modifier = Modifier.padding(top = 10.dp),
                         fontWeight = FontWeight.Bold,
                         color = Color.Gray,
@@ -175,66 +172,68 @@ fun TopicsScreenContent(
                     )
                 }
 
-                val dismissState = rememberSwipeToDismissBoxState()
+                items(topicsInCategory, key = { it.topic.id }) { item ->
+                    val isEditing = uiState.editingTopic?.topic?.id == item.topic.id
+                    val dismissState = rememberSwipeToDismissBoxState()
 
-                SwipeToDismissBox(
-                    state = dismissState,
-                    enableDismissFromStartToEnd = true,
-                    enableDismissFromEndToStart = false,
-                    onDismiss = { value ->
-                        if (value == SwipeToDismissBoxValue.StartToEnd) {
-                            topicToDelete = item.topic
-                            scope.launch { dismissState.reset() }
-                        }
-                    },
-                    backgroundContent = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(vertical = 4.dp),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Eliminar",
-                                modifier = Modifier.padding(start = 16.dp),
-                                tint = Color.Red
-                            )
-                        }
-                    }
-                ) {
-                    ListItem(
-                        leadingContent = {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                AsyncImage(
-                                    model = uiState.logoUrls[item.topic.name],
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(4.dp),
-                                    contentScale = ContentScale.Fit
-                                )
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        enableDismissFromStartToEnd = true,
+                        enableDismissFromEndToStart = false,
+                        onDismiss = { value ->
+                            if (value == SwipeToDismissBoxValue.StartToEnd) {
+                                topicToDelete = item.topic
+                                scope.launch { dismissState.reset() }
                             }
                         },
-                        headlineContent = {
-                            Text(
-                                text = item.topic.name,
-                                fontWeight = if (isEditing) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isEditing) Color.Blue else Color.Unspecified,
-                                fontSize = 16.sp
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onTopicClick(item) },
-                        tonalElevation = if (isEditing) 4.dp else 0.dp
-                    )
+                        backgroundContent = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(vertical = 4.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Eliminar",
+                                    modifier = Modifier.padding(start = 16.dp),
+                                    tint = Color.Red
+                                )
+                            }
+                        }
+                    ) {
+                        ListItem(
+                            leadingContent = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    AsyncImage(
+                                        model = uiState.logoUrls[item.topic.name],
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(4.dp),
+                                        contentScale = ContentScale.Fit
+                                    )
+                                }
+                            },
+                            headlineContent = {
+                                Text(
+                                    text = item.topic.name,
+                                    fontWeight = if (isEditing) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isEditing) Color.Blue else Color.Unspecified,
+                                    fontSize = 16.sp
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onTopicClick(item) },
+                            tonalElevation = if (isEditing) 4.dp else 0.dp
+                        )
+                    }
                 }
             }
         }

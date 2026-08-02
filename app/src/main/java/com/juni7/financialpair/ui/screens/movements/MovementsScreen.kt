@@ -1,19 +1,18 @@
 package com.juni7.financialpair.ui.screens.movements
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -33,28 +32,35 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.juni7.financialpair.data.entity.Category
 import com.juni7.financialpair.data.entity.Movement
 import com.juni7.financialpair.data.entity.MovementWithTopic
 import com.juni7.financialpair.data.entity.Topic
+import com.juni7.financialpair.data.entity.TopicWithCategory
 import com.juni7.financialpair.ui.components.FPMovement
 import com.juni7.financialpair.ui.components.FPMovementHeader
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.compose.viewmodel.koinViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-
 @Composable
 fun MovementsScreen(
     onMovementClick: (Long) -> Unit = {},
     vm: MovementsScreenViewModel = koinViewModel()
 ) {
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val uiState: MovementsScreenState by vm.uiState.collectAsStateWithLifecycle()
+    val movements = vm.movementsPaged.collectAsLazyPagingItems()
 
     MovementsScreenContent(
         uiState = uiState,
+        movements = movements,
         onDescriptionChange = vm::onDescriptionChange,
         onAmountChange = vm::onAmountChange,
         onTopicSelected = vm::onTopicSelected,
@@ -66,6 +72,7 @@ fun MovementsScreen(
 @Composable
 fun MovementsScreenContent(
     uiState: MovementsScreenState,
+    movements: LazyPagingItems<MovementWithTopic>,
     onDescriptionChange: (String) -> Unit = {},
     onAmountChange: (String) -> Unit = {},
     onTopicSelected: (Topic) -> Unit = {},
@@ -149,31 +156,30 @@ fun MovementsScreenContent(
             Text(text = "+")
         }
 
-        val totalsByDate = remember(uiState.movements) {
-            uiState.movements
-                .groupBy { it.movement.date }
-                .mapValues { (_, movements) ->
-                    movements.sumOf { it.movement.amount }
-                }
-        }
         LazyColumn {
-            itemsIndexed(uiState.movements) { index, movementWithTopic ->
-                val movement = movementWithTopic.movement
-                val topic = movementWithTopic.topic
-                val previous = uiState.movements.getOrNull(index - 1)
-                val showHeader = previous == null || previous.movement.date != movement.date
+            items(
+                count = movements.itemCount,
+                key = movements.itemKey { it.movement.id }
+            ) { index ->
+                val movementWithTopic = movements[index]
+                if (movementWithTopic != null) {
+                    val movement = movementWithTopic.movement
+                    val topic = movementWithTopic.topic
+                    val previous = if (index > 0) movements[index - 1] else null
+                    val showHeader = previous == null || previous.movement.date != movement.date
 
-                if (showHeader) {
-                    FPMovementHeader(
-                        date = movement.date,
-                        total = totalsByDate[movement.date] ?: 0
+                    if (showHeader) {
+                        FPMovementHeader(
+                            date = movement.date,
+                            total = uiState.totalsByDate[movement.date] ?: 0
+                        )
+                    }
+                    FPMovement(
+                        movement = movement,
+                        logoUrl = uiState.logoUrls[topic.name],
+                        onClick = { onMovementClick(movement.id) }
                     )
                 }
-                FPMovement(
-                    movement = movement,
-                    logoUrl = uiState.logoUrls[topic.name],
-                    onClick = { onMovementClick(movement.id) }
-                )
             }
         }
     }
@@ -194,65 +200,46 @@ fun Int.toLocalizedDate(): String {
 @Preview(showBackground = true)
 @Composable
 private fun MovementsScreenPreview() {
+    val mockMovements = listOf(
+        MovementWithTopic(
+            movement = Movement(
+                id = 1,
+                description = "Comida",
+                amount = 2500,
+                date = 20260702,
+                topicId = 1
+            ),
+            topicWithCategory = TopicWithCategory(
+                topic = Topic(id = 1, name = "Comida", categoryId = 2),
+                category = Category(id = 2, name = "Comida")
+            )
+        ),
+        MovementWithTopic(
+            movement = Movement(
+                id = 2,
+                description = "Salario",
+                amount = 15000,
+                date = 20260702,
+                topicId = 2
+            ),
+            topicWithCategory = TopicWithCategory(
+                topic = Topic(id = 2, name = "Salario", categoryId = 0),
+                category = Category(id = 0, name = "General")
+            )
+        )
+    )
+    
+    val pagingDataFlow = remember { 
+        MutableStateFlow(PagingData.from(mockMovements))
+    }
+    val movements = pagingDataFlow.collectAsLazyPagingItems()
+
     MovementsScreenContent(
         uiState = MovementsScreenState(
             description = "Hola cara de bola",
             amount = "25",
-            movements = listOf(
-                MovementWithTopic(
-                    movement = Movement(
-                        id = 1,
-                        description = "Comida",
-                        amount = 2500,
-                        date = 20260702,
-                        topicId = 1
-                    ),
-                    topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
-                        topic = Topic(id = 1, name = "Comida", categoryId = 2),
-                        category = Category(id = 2, name = "Comida")
-                    )
-                ),
-                MovementWithTopic(
-                    movement = Movement(
-                        id = 2,
-                        description = "Salario",
-                        amount = 15000,
-                        date = 20260702,
-                        topicId = 2
-                    ),
-                    topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
-                        topic = Topic(id = 2, name = "Salario", categoryId = 0),
-                        category = Category(id = 0, name = "General")
-                    )
-                ),
-                MovementWithTopic(
-                    movement = Movement(
-                        id = 3,
-                        description = "Netflix",
-                        amount = -150,
-                        date = 20260701,
-                        topicId = 3
-                    ),
-                    topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
-                        topic = Topic(id = 3, name = "Netflix", categoryId = 4),
-                        category = Category(id = 4, name = "Entretenimiento")
-                    )
-                ),
-                MovementWithTopic(
-                    movement = Movement(
-                        id = 4,
-                        description = "Comida",
-                        amount = 2500,
-                        date = 20260701,
-                        topicId = 1
-                    ),
-                    topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
-                        topic = Topic(id = 1, name = "Comida", categoryId = 2),
-                        category = Category(id = 2, name = "Comida")
-                    )
-                )
-            )
         ),
+        movements = movements,
         onDescriptionChange = {},
         onAmountChange = {},
         insertMovement = {}

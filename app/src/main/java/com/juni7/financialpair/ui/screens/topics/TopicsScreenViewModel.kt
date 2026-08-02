@@ -107,8 +107,15 @@ class TopicsScreenViewModel(
         query: String,
         isEditing: Boolean
     ): List<TopicWithCategory> {
-        if (isEditing || query.isBlank()) return topics
-        return topics.filter { it.topic.name.contains(query, ignoreCase = true) }
+        val filtered = if (isEditing || query.isBlank()) {
+            topics
+        } else {
+            topics.filter { it.topic.name.contains(query, ignoreCase = true) }
+        }
+        return filtered.sortedWith(
+            compareBy<TopicWithCategory> { it.category.name }
+                .thenBy { it.topic.name }
+        )
     }
 
     fun onCategoryChange(category: Category) {
@@ -161,7 +168,7 @@ class TopicsScreenViewModel(
                 name = topic.topic.name,
                 selectedCategory = topic.category,
                 hasNameError = false,
-                filteredTopics = it.topics // Show all topics when editing
+                filteredTopics = filterTopics(it.topics, "", true)
             )
         }
     }
@@ -174,7 +181,7 @@ class TopicsScreenViewModel(
                 selectedCategory = null,
                 hasNameError = false,
                 error = null,
-                filteredTopics = it.topics
+                filteredTopics = filterTopics(it.topics, "", false)
             )
         }
     }
