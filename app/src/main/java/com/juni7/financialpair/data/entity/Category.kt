@@ -7,6 +7,5 @@ import androidx.room.PrimaryKey
 data class Category(
     @PrimaryKey(autoGenerate = true)
     val id: Int,
-    val name: String,
-    val emoji: String? = null
+    val name: String
 )

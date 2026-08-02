@@ -1,7 +1,10 @@
 package com.juni7.financialpair.ui.screens.topics
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Firebase
+import com.google.firebase.storage.storage
 import com.juni7.financialpair.data.entity.Category
 import com.juni7.financialpair.data.entity.Topic
 import com.juni7.financialpair.data.entity.TopicWithCategory
@@ -11,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class TopicsScreenViewModel(
     private val topicRepository: TopicRepository,
@@ -18,6 +22,8 @@ class TopicsScreenViewModel(
 ): ViewModel() {
     private val _uiState = MutableStateFlow(TopicsScreenState())
     val uiState = _uiState.asStateFlow()
+
+    private val inProgressFetches = mutableSetOf<String>()
 
     init {
         viewModelScope.launch {
@@ -28,6 +34,7 @@ class TopicsScreenViewModel(
                         filteredTopics = filterTopics(topics, it.name, it.editingTopic != null)
                     )
                 }
+                fetchLogosForTopics(topics)
             }
         }
         viewModelScope.launch {
@@ -36,6 +43,60 @@ class TopicsScreenViewModel(
                     it.copy(
                         categories = categories
                     )
+                }
+                fetchLogosForCategories(categories)
+            }
+        }
+    }
+
+    private fun fetchLogosForTopics(topics: List<TopicWithCategory>) {
+        topics.forEach { item ->
+            fetchLogo(item.topic.name, item.category.name, item.topic.logoUrl) { url ->
+                topicRepository.updateLogoUrl(item.topic.id, url)
+            }
+        }
+    }
+
+    private fun fetchLogosForCategories(categories: List<Category>) {
+        categories.forEach { category ->
+            fetchLogo(category.name, null, null) { /* No persist category logos yet */ }
+        }
+    }
+
+    private fun fetchLogo(name: String, fallbackName: String?, cachedUrl: String?, onUrlFetched: suspend (String) -> Unit = {}) {
+        val currentUrls = _uiState.value.logoUrls
+        
+        // Use cached URL if available and not already in state
+        if (!currentUrls.containsKey(name) && cachedUrl != null) {
+            _uiState.update {
+                it.copy(logoUrls = it.logoUrls + (name to cachedUrl))
+            }
+        }
+
+        if (!currentUrls.containsKey(name) && !inProgressFetches.contains(name)) {
+            inProgressFetches.add(name)
+            viewModelScope.launch {
+                try {
+                    val path = "logos/${name.trim().lowercase().replace(' ', '-')}.svg"
+                    val url = try {
+                        Firebase.storage.reference.child(path).downloadUrl.await().toString()
+                    } catch (e: Exception) {
+                        if (fallbackName != null) {
+                            val fallbackPath = "logos/${fallbackName.trim().lowercase().replace(' ', '-')}.svg"
+                            Firebase.storage.reference.child(fallbackPath).downloadUrl.await().toString()
+                        } else {
+                            throw e
+                        }
+                    }
+
+                    _uiState.update {
+                        it.copy(logoUrls = it.logoUrls + (name to url))
+                    }
+                    onUrlFetched(url)
+                } catch (e: Exception) {
+                    Log.e("TopicsVM", "Error fetching logo for $name: ${e.message}")
+                } finally {
+                    inProgressFetches.remove(name)
                 }
             }
         }
@@ -94,12 +155,11 @@ class TopicsScreenViewModel(
             clearSelection()
             return
         }
-        val category = _uiState.value.categories.find { it.name == topic.category.name }
         _uiState.update {
             it.copy(
                 editingTopic = topic,
                 name = topic.topic.name,
-                selectedCategory = category,
+                selectedCategory = topic.category,
                 hasNameError = false,
                 filteredTopics = it.topics // Show all topics when editing
             )

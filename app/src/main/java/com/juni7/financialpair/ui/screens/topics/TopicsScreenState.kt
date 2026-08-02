@@ -7,6 +7,7 @@ data class TopicsScreenState(
     val topics: List<TopicWithCategory> = emptyList(),
     val filteredTopics: List<TopicWithCategory> = emptyList(),
     val categories: List<Category> = emptyList(),
+    val logoUrls: Map<String, String> = emptyMap(),
     val name: String = "",
     val selectedCategory : Category? = null,
     val editingTopic: TopicWithCategory? = null,

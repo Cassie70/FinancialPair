@@ -172,7 +172,6 @@ fun MovementsScreenContent(
                 FPMovement(
                     movement = movement,
                     logoUrl = uiState.logoUrls[topic.name],
-                    fallbackEmoji = movementWithTopic.category.emoji,
                     onClick = { onMovementClick(movement.id) }
                 )
             }
@@ -210,7 +209,7 @@ private fun MovementsScreenPreview() {
                     ),
                     topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
                         topic = Topic(id = 1, name = "Comida", categoryId = 2),
-                        category = Category(id = 2, name = "Comida", emoji = "🍴")
+                        category = Category(id = 2, name = "Comida")
                     )
                 ),
                 MovementWithTopic(
@@ -223,7 +222,7 @@ private fun MovementsScreenPreview() {
                     ),
                     topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
                         topic = Topic(id = 2, name = "Salario", categoryId = 0),
-                        category = Category(id = 0, name = "General", emoji = "💰")
+                        category = Category(id = 0, name = "General")
                     )
                 ),
                 MovementWithTopic(
@@ -236,7 +235,7 @@ private fun MovementsScreenPreview() {
                     ),
                     topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
                         topic = Topic(id = 3, name = "Netflix", categoryId = 4),
-                        category = Category(id = 4, name = "Entretenimiento", emoji = "🎮")
+                        category = Category(id = 4, name = "Entretenimiento")
                     )
                 ),
                 MovementWithTopic(
@@ -249,7 +248,7 @@ private fun MovementsScreenPreview() {
                     ),
                     topicWithCategory = com.juni7.financialpair.data.entity.TopicWithCategory(
                         topic = Topic(id = 1, name = "Comida", categoryId = 2),
-                        category = Category(id = 2, name = "Comida", emoji = "🍴")
+                        category = Category(id = 2, name = "Comida")
                     )
                 )
             )

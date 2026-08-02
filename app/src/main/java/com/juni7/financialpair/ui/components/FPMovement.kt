@@ -12,10 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,7 +25,6 @@ import java.text.DecimalFormat
 fun FPMovement(
     movement: Movement,
     logoUrl: String? = null,
-    fallbackEmoji: String? = null,
     onClick: () -> Unit = {}
 ){
     Row(
@@ -41,36 +36,27 @@ fun FPMovement(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         val df = DecimalFormat("$#,##0.00")
-        var isError by remember { mutableStateOf(false) }
 
-        // Contenedor circular para logo o emoji
+        // Contenedor circular para logo
         Box(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            if (logoUrl != null && !isError) {
-                AsyncImage(
-                    model = logoUrl,
-                    contentDescription = "Logo de ${movement.description}",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    contentScale = ContentScale.Fit,
-                    onState = { state ->
-                        if (state is coil.compose.AsyncImagePainter.State.Error) {
-                            android.util.Log.e("FPMovement", "Error loading image: ${state.result.throwable.message}")
-                            isError = true
-                        }
+            AsyncImage(
+                model = logoUrl,
+                contentDescription = "Logo de ${movement.description}",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                contentScale = ContentScale.Fit,
+                onState = { state ->
+                    if (state is coil.compose.AsyncImagePainter.State.Error) {
+                        android.util.Log.e("FPMovement", "Error loading image: ${state.result.throwable.message}")
                     }
-                )
-            } else if (fallbackEmoji != null) {
-                Text(
-                    text = fallbackEmoji,
-                    style = MaterialTheme.typography.headlineSmall
-                )
-            }
+                }
+            )
         }
 
         Text(

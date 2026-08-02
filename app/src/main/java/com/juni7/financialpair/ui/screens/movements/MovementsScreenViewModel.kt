@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
 import com.google.firebase.storage.storage
 import com.juni7.financialpair.data.entity.Movement
+import com.juni7.financialpair.data.entity.MovementWithTopic
 import com.juni7.financialpair.data.entity.Topic
 import com.juni7.financialpair.data.repository.MovementRepository
 import com.juni7.financialpair.data.repository.TopicRepository
@@ -37,7 +38,7 @@ class MovementsScreenViewModel(
                         movements = movements
                     )
                 }
-                fetchMissingLogos(movements.map { it.topic })
+                fetchMissingLogos(movements)
             }
         }
 
@@ -48,11 +49,14 @@ class MovementsScreenViewModel(
         }
     }
 
-    private fun fetchMissingLogos(topics: List<Topic>) {
+    private fun fetchMissingLogos(movements: List<MovementWithTopic>) {
         val currentUrls = _uiState.value.logoUrls
-        val uniqueTopics = topics.distinctBy { it.name }
+        val uniqueTopics = movements.map { it.topicWithCategory }.distinctBy { it.topic.name }
 
-        uniqueTopics.forEach { topic ->
+        uniqueTopics.forEach { topicWithCategory ->
+            val topic = topicWithCategory.topic
+            val category = topicWithCategory.category
+            
             // Use cached URL from database if available and not already in state
             if (!currentUrls.containsKey(topic.name) && topic.logoUrl != null) {
                 _uiState.update {
@@ -67,12 +71,16 @@ class MovementsScreenViewModel(
                 Log.d("MovementsVM", "Checking Firebase for topic: ${topic.name}")
                 viewModelScope.launch {
                     try {
-                        val path = "logos/${topic.name.trim().lowercase().replace(' ', '-')}.svg"
-                        Log.d("MovementsVM", "Attempting to fetch URL from Firebase for path: $path")
+                        val topicPath = "logos/${topic.name.trim().lowercase().replace(' ', '-')}.svg"
+                        Log.d("MovementsVM", "Attempting to fetch URL from Firebase for path: $topicPath")
                         
-                        val task = Firebase.storage.reference.child(path).downloadUrl
-                        
-                        val url = task.await().toString()
+                        val url = try {
+                            Firebase.storage.reference.child(topicPath).downloadUrl.await().toString()
+                        } catch (e: Exception) {
+                            Log.d("MovementsVM", "Topic logo not found, trying category fallback: ${category.name}")
+                            val categoryPath = "logos/${category.name.trim().lowercase().replace(' ', '-')}.svg"
+                            Firebase.storage.reference.child(categoryPath).downloadUrl.await().toString()
+                        }
 
                         Log.d("MovementsVM", "Successfully fetched logo for ${topic.name}: $url")
 
